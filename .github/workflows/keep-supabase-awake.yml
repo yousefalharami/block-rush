@@ -1,0 +1,18 @@
+# Free Supabase projects pause after 7 days without activity. This reads the public store settings
+# (the same request every app launch makes) every 3 days so the game server never pauses while it's quiet.
+name: Keep Supabase awake
+on:
+  schedule:
+    - cron: "17 6 */3 * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read store config
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://ejnqoxorlnrwgqfyxacv.supabase.co/rest/v1/store_config?select=id&limit=1" \
+            -H "apikey: sb_publishable_Tt6w0vMKUu3Z1RdOdr2LUw_j0SkhG1t")
+          echo "Supabase answered $code"
+          test "$code" = "200"
