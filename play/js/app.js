@@ -4,7 +4,7 @@ import { N, empty, toLayers, paletteOf, parseLayers, mountBuilder, mountScene, i
 import { loadBuilds } from "./builds.js";
 import { play, isMuted, toggleMute } from "./sfx.js";
 import { initBackground, play as bgPlay, pause as bgPause } from "./bg.js";
-import { restorePurchases, isUnlimited, gamesLeft, chargeMatch, claimWin, onGamesChange, syncTime, redeem, freePerDay, pendingPrize, prizeSeen } from "./games.js";
+import { webOpen, restorePurchases, isUnlimited, gamesLeft, chargeMatch, claimWin, onGamesChange, syncTime, redeem, freePerDay, pendingPrize, prizeSeen } from "./games.js";
 import { iapAvailable, initIap, buy, priceOf, onIap } from "./iap.js";
 import { initServer, serverOn, rpc, joinPresence, playersOnline, onPlayersOnline } from "./server.js";
 import { storeConfig, loadStoreConfig, cmpVersion } from "./store.js";
@@ -68,8 +68,8 @@ async function refreshProfile() {
 const gamesText = () => (gamesLeft() === Infinity ? "∞" : String(gamesLeft()));
 const header = extra => `<div class="top">
   <div class="top-r">${extra || ""}<button class="chip ghost" id="mute" aria-label="${t("sound")}">${muteIcon()}</button></div>
-  <div class="games-pill"><button class="plus" id="buy" aria-label="${t("getGames")}">+</button>
-    <span class="games-n" aria-label="${t("gamesLeftLabel")}">${gamesText()}</span></div></div>`;
+  ${webOpen ? "" : `<div class="games-pill"><button class="plus" id="buy" aria-label="${t("getGames")}">+</button>
+    <span class="games-n" aria-label="${t("gamesLeftLabel")}">${gamesText()}</span></div>`}</div>`;
 onGamesChange(() => { document.querySelectorAll(".games-n").forEach(e => { e.textContent = gamesText(); }); prizePopup(); });
 
 // Monthly prize: top 3 of the monthly leaderboard win 1 free month of unlimited games (granted by the server).
@@ -1032,7 +1032,7 @@ function onMessage(m) {
       // Online wins count for the leaderboards; the first 2 a day earn a free game (the server checks both;
       // Private wins don't count, so they can't be farmed with friends on one Wi-Fi).
       if (m.state.winner === selfId && transportName() === "supabase" && m.state.settings.room?.online)
-        claimWin(matchKey(m.state)).then(n => { if (n) winRewardPopup(n); });
+        claimWin(matchKey(m.state)).then(n => { if (n && !webOpen) winRewardPopup(n); });   // website: games are unlimited, no "+1 game" pop-up
     }
   }
   render();

@@ -9,6 +9,9 @@ import { serverOn as serverReady, serverSettled, rpc } from "./server.js";
 import { getClient } from "./net/supabase.js";
 // Server mode, or still connecting with a cached server state (show the last known count, not the offline default).
 const serverOn = () => serverReady() || (!serverSettled() && !!srv);
+// The website is free and open (user, 2026-10-18): no game counter, nothing runs out. Matches are still recorded on the
+// server (charge_game p_free) so online wins, leaderboards and streaks work. The iPhone/Android apps keep daily games.
+export const webOpen = !window.Capacitor?.isNativePlatform?.();
 // Free games per day come from the store config (default 2).
 export const freePerDay = () => (serverOn() && srv ? srv.freePerDay : storeConfig().freePerDay);
 const K = { day: "br.gamesDay", used: "br.gamesUsed", extra: "br.gamesExtra", unlimited: "br.unlimited", last: "br.lastGame", trust: "br.trustMax" };
@@ -45,6 +48,7 @@ async function renewalCheck() {
 }
 // Spend one game for this match. Resolves true if I may play (charged now or already charged for it).
 export async function chargeMatch(matchKey, room) {
+  if (webOpen) { if (serverReady()) rpc("charge_game", { p_match: matchKey, p_room: room, p_free: true }).catch(() => {}); return true; }
   if (!serverReady()) { if (gamesLeft() < 1 && get(K.last) !== matchKey) return false; consumeGame(matchKey); return true; }
   try { const r = await rpc("charge_game", { p_match: matchKey, p_room: room }); keep(r.state); return r.ok; }
   catch { return true; }   // server hiccup: don't kick the player out mid-match
@@ -103,8 +107,9 @@ function rollDay() {
   if (now === null) return;   // no trusted time yet: keep today's count as is
   if (get(K.day) !== dayOf(now)) { set(K.day, dayOf(now)); set(K.used, 0); }
 }
-export const isUnlimited = () => (serverOn() ? !!srv?.unlimited : get(K.unlimited) === "1");
+export const isUnlimited = () => webOpen || (serverOn() ? !!srv?.unlimited : get(K.unlimited) === "1");
 export function gamesLeft() {
+  if (webOpen) return Infinity;
   if (serverOn()) return !srv ? freePerDay() : srv.unlimited ? Infinity : srv.left;
   rollDay();
   if (isUnlimited()) return Infinity;
