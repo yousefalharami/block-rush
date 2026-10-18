@@ -422,7 +422,9 @@ function mainMenu() {
     <button class="btn wide big" id="chbtn">${t("menuChallenges")}</button>
     <button class="btn wide big" data-go="#howto">${t("menuHowTo")}</button>
     ${CONFIG.DESIGN_LAB ? `<button class="link" data-go="#lab">LAB · design options</button>` : ""}
-    ${webOpen ? `<p class="soon-ios">${t("soonIos")}</p>` : ""}
+    ${webOpen ? `<div class="soon-ios" role="note">
+      <svg class="soon-phone" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M10 18.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span><small>${t("soonLabel")}</small><b>${t("soonPlatform")}</b></span></div>` : ""}
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { location.hash = b.dataset.go; });
   app.querySelector("#back").onclick = () => { location.hash = ""; };   // back to the title screen

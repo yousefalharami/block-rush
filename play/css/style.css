@@ -595,5 +595,16 @@ html[data-layout=full] .arena-stage .view canvas.fx{left:0;transform:translateY(
 .web-foot a:hover{color:var(--ink)}
 .web-foot .ios-get{font:600 13px var(--body);color:var(--ink);padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(12,14,36,.6)}
 .prize-banner[data-off]{display:none}
-.soon-ios{margin:2px 0 0;font:600 12px var(--body);color:var(--muted);letter-spacing:.04em;text-align:center}
+/* "Coming soon on iOS" card at the bottom of the website's main menu */
+.soon-ios{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;width:100%;max-width:320px;margin-top:6px;padding:12px 18px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,178,63,.18),rgba(176,124,255,.18));border:1.5px solid rgba(255,178,63,.55);overflow:hidden;
+  box-shadow:0 0 0 1px rgba(0,0,0,.2),0 8px 28px rgba(255,178,63,.18);animation:soon-glow 2.6s ease-in-out infinite}
+.soon-ios::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.22) 50%,transparent 70%);
+  transform:translateX(-100%);animation:soon-shine 3.2s ease-in-out infinite}
+.soon-phone{width:34px;height:34px;flex:0 0 auto;color:var(--accent)}
+.soon-ios span{display:flex;flex-direction:column;line-height:1.05;text-align:start}
+.soon-ios small{font:600 12px var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.soon-ios b{font:400 22px var(--display);color:var(--ink)}
+@keyframes soon-glow{50%{box-shadow:0 0 0 1px rgba(0,0,0,.2),0 8px 34px rgba(255,178,63,.38)}}
+@keyframes soon-shine{0%,40%{transform:translateX(-100%)}80%,100%{transform:translateX(100%)}}
 .ch-body .ch-go{width:100%;max-width:none;align-self:stretch}
