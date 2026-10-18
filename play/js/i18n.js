@@ -108,7 +108,7 @@ const STR = {
     friendRequestSent: "Request sent to {name}.", friendNowFriends: "You and {name} are now friends!", friendPending: "You already sent {name} a request.", friendsTheirFull: "{name} already has 50 friends.", friendRequests: "Friend requests", friendSent: "Sent requests", accept: "Accept", reqFrom: "<b>{name}</b> sent you a friend request", reqMany: "You have <b>{n}</b> new friend requests", decline: "Decline", cancel: "Cancel", friendNotFound: "No player has that ID.", friendSelf: "That's your own ID.",
     friendAlready: "{name} is already your friend.", friendsFull: "You can add up to 50 friends.", friendBadId: "Enter a 5-digit ID.",
     friendsEmpty: "Send a friend request with their ID. Once they accept, you can compare wins.", removeFriendQ: "Remove {name} from your friends?", remove: "Remove",
-    streakLabel: "{n} wins in a row", gotIt: "Got it, let's play!", mainMenu: "Main menu", getOnIphone: "Also on iPhone: get it on the App Store", support: "Support", kbdHint: "Keys: 1–9 colors · 0 eraser · Z undo", notifNudge: "Turn on notifications in Settings to get Challenge reminders.", feedGot: "<b>{name}</b> got 100%!", feedYou: "<b>You</b> got 100%!",
+    streakLabel: "{n} wins in a row", gotIt: "Got it, let's play!", mainMenu: "Main menu", chWonPlain: "Done! You beat it.", chWinPlain: "You got 100% on every shape!", soonIos: "Coming soon on iOS", getOnIphone: "Also on iPhone: get it on the App Store", support: "Support", kbdHint: "Keys: 1–9 colors · 0 eraser · Z undo", notifNudge: "Turn on notifications in Settings to get Challenge reminders.", feedGot: "<b>{name}</b> got 100%!", feedYou: "<b>You</b> got 100%!",
 };
 
 export function t(key, vars = {}) {

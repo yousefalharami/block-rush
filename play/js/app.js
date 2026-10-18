@@ -74,7 +74,12 @@ onGamesChange(() => { document.querySelectorAll(".games-n").forEach(e => { e.tex
 
 // Monthly prize: top 3 of the monthly leaderboard win 1 free month of unlimited games (granted by the server).
 // Winners get this pop-up once (not mid-match); everyone else learns about it from the trophy button.
+// Website (free & open, user 2026-10-18): no monthly prize and no "+games" rewards anywhere. Flip to true to bring them back.
+const WEB_REWARDS = false;
+const rewardsShown = () => !webOpen || WEB_REWARDS;
+
 function prizePopup() {
+  if (!rewardsShown()) return;
   const p = pendingPrize();
   if (!p || document.querySelector(".prize-pop") || (S.state && S.state.phase !== "lobby" && S.state.phase !== "over")) return;
   const el = document.createElement("div"); el.className = "store prize-pop";
@@ -110,7 +115,7 @@ function prizeInfo(then) {
 // Start of each month: everyone sees last month's top 3 once (winners get their own "You finished #n" pop-up).
 async function winnersPopup() {
   const month = utcMonth();
-  if (!serverOn() || store.get("br.winnersSeen") === month) return;
+  if (!rewardsShown() || !serverOn() || store.get("br.winnersSeen") === month) return;
   let r; try { r = await rpc("month_winners"); } catch { return; }
   const w = r?.winners || [];
   if (!w.length || w.some(x => x.me)) { store.set("br.winnersSeen", month); return; }
@@ -417,13 +422,14 @@ function mainMenu() {
     <button class="btn wide big" id="chbtn">${t("menuChallenges")}</button>
     <button class="btn wide big" data-go="#howto">${t("menuHowTo")}</button>
     ${CONFIG.DESIGN_LAB ? `<button class="link" data-go="#lab">LAB · design options</button>` : ""}
+    ${webOpen ? `<p class="soon-ios">${t("soonIos")}</p>` : ""}
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { location.hash = b.dataset.go; });
   app.querySelector("#back").onclick = () => { location.hash = ""; };   // back to the title screen
   app.querySelector("#chbtn").onclick = openChallenges;
   const toBoard = () => { location.hash = "#leaders"; };
-  app.querySelector("#lbbtn").onclick = () => (store.get("br.prizeInfo") === utcMonth() ? toBoard() : prizeInfo(toBoard));
-  if (store.get("br.onboard") === "prize") { store.set("br.onboard", "done"); prizeInfo(toBoard); }
+  app.querySelector("#lbbtn").onclick = () => (!rewardsShown() || store.get("br.prizeInfo") === utcMonth() ? toBoard() : prizeInfo(toBoard));
+  if (store.get("br.onboard") === "prize") { store.set("br.onboard", "done"); if (rewardsShown()) prizeInfo(toBoard); }
   else notifyNudge();
   checkFriendRequests();
 }
@@ -572,7 +578,7 @@ function leaderboard() {
     <div class="phase">${t("menuLeaders")}</div>
     <div class="seg" id="lbwho">${[["all", t("lbEveryone")], ["friends", t("lbFriends")]].map(([v, l]) =>
       `<button type="button" data-w="${v}">${l}</button>`).join("")}</div>
-    <div class="prize-banner">${ICON.trophy}<span>${t(daysLeftInMonth() === 1 ? "prizeBanner1" : "prizeBanner", { n: daysLeftInMonth() })}</span></div>
+    <div class="prize-banner" ${rewardsShown() ? "" : "data-off"}>${ICON.trophy}<span>${t(daysLeftInMonth() === 1 ? "prizeBanner1" : "prizeBanner", { n: daysLeftInMonth() })}</span></div>
     <div class="friend-box" hidden>
       <div class="my-id"><span>${t("myId")}</span><b dir="ltr" id="myid">${idText(PROFILE.publicId)}</b>
         <button class="chip ghost" id="copyid">${ICON.share}<span>${t("copy")}</span></button></div>
@@ -591,7 +597,7 @@ function leaderboard() {
   const load = async () => {
     app.querySelectorAll("#lbtabs button").forEach(b => b.classList.toggle("on", b.dataset.p === period));
     app.querySelectorAll("#lbwho button").forEach(b => b.classList.toggle("on", b.dataset.w === who));
-    app.querySelector(".prize-banner").hidden = who === "friends";
+    const pb = app.querySelector(".prize-banner"); pb.hidden = who === "friends" || pb.hasAttribute("data-off");
     fbox.hidden = who !== "friends";
     if (!serverOn()) { box.innerHTML = `<p class="hint">${t("lbOffline")}</p>`; return; }
     box.innerHTML = `<p class="hint">${t("loading")}</p>`;
@@ -715,7 +721,7 @@ function openChallenges() {
     <button class="chip ghost store-x" aria-label="${t("close")}">×</button>
     <div class="phase">${t("menuChallenges")}</div>
     ${CH_KINDS.map(k => `<div class="ch-card ${k}" id="ch-${k}">
-      <div class="ch-head"><b>${t(k === "daily" ? "chDaily" : "chWeekly")}</b><span class="ch-prize">${t(k === "daily" ? "chPrizeDaily" : "chPrizeWeekly")}</span></div>
+      <div class="ch-head"><b>${t(k === "daily" ? "chDaily" : "chWeekly")}</b>${rewardsShown() ? `<span class="ch-prize">${t(k === "daily" ? "chPrizeDaily" : "chPrizeWeekly")}</span>` : ""}</div>
       <p class="hint">${t("chRequire")}</p>
       <div class="ch-body"><p class="hint small">${t("loading")}</p></div></div>`).join("")}
   </div>`;
@@ -732,7 +738,7 @@ function chCard(kind, v) {
   const open = v.status === "new" || v.status === "playing";
   body.innerHTML = `
     ${open ? `<button class="btn wide ch-go" data-k="${kind}">${t(v.status === "new" ? "chPlay" : "chContinue")}</button>`
-      : `<p class="${v.status === "won" ? "good" : "err"}">${v.status === "won" ? t(kind === "daily" ? "chWonDaily" : "chWonWeekly") : t("chLostCard")}</p>
+      : `<p class="${v.status === "won" ? "good" : "err"}">${v.status === "won" ? t(!rewardsShown() ? "chWonPlain" : kind === "daily" ? "chWonDaily" : "chWonWeekly") : t("chLostCard")}</p>
          <p class="hint small">${t("chResets", { t: untilText(v.resetsAt) })}</p>`}
     ${kind === "weekly" && v.winPct != null ? `<p class="hint small ch-pct">${v.winPct ? t("chWinPct", { n: v.winPct }) : t("chWinPct0")}</p>` : ""}`;
   const go = body.querySelector(".ch-go");
@@ -853,7 +859,7 @@ function chEnd(run, v) {
   const el = document.createElement("div"); el.className = "store reward-pop";
   el.innerHTML = `<div class="store-card" role="dialog" aria-modal="true">
     <div class="phase">${t(won ? "chWinTitle" : "chFailTitle")}</div>
-    ${won ? `<div class="reward-big">+${v.reward}</div><p class="hint">${t(daily ? "chWinDaily" : "chWinWeekly")}</p>`
+    ${won ? (rewardsShown() ? `<div class="reward-big">+${v.reward}</div><p class="hint">${t(daily ? "chWinDaily" : "chWinWeekly")}</p>` : `<p class="hint">${t("chWinPlain")}</p>`)
       : `<p class="hint">${time ? t("chFailTime", { s: v.step + 1 }) : t("chFail", { n: v.scores[last - 1], s: last })}</p>
          <p class="hint small">${t(daily ? "chAgainDay" : "chAgainWeek")}</p>`}
     <button class="btn wide" id="chok">${t("ok")}</button></div>`;

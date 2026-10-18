@@ -594,3 +594,5 @@ html[data-layout=full] .arena-stage .view canvas.fx{left:0;transform:translateY(
 .web-foot a{color:var(--muted);text-decoration:none}
 .web-foot a:hover{color:var(--ink)}
 .web-foot .ios-get{font:600 13px var(--body);color:var(--ink);padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(12,14,36,.6)}
+.prize-banner[data-off]{display:none}
+.soon-ios{margin:2px 0 0;font:600 12px var(--body);color:var(--muted);letter-spacing:.04em;text-align:center}
