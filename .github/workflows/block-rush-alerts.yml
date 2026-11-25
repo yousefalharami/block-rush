@@ -1,0 +1,37 @@
+# Block Rush alerts → GitHub issue → GitHub emails the owner (issues opened by github-actions[bot] notify watchers).
+# Supabase saves the alerts (Edge Function watch-online, every minute): players online at 100 / 125 / 150 (free plan
+# limit = 200 Realtime connections; once per month each) and total players 500 / 1k / 2.5k… (once ever).
+# Secret BR_ALERT_TOKEN = the token whose SHA-256 is in Supabase private.alert_config.
+name: Block Rush alerts
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+permissions:
+  issues: write
+jobs:
+  alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Email new alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.BR_ALERT_TOKEN }}
+          URL: https://ejnqoxorlnrwgqfyxacv.supabase.co/rest/v1/rpc
+          KEY: sb_publishable_Tt6w0vMKUu3Z1RdOdr2LUw_j0SkhG1t
+        run: |
+          set -euo pipefail
+          rpc() { curl -sf -X POST "$URL/$1" -H "apikey: $KEY" -H "Content-Type: application/json" -d "$2"; }
+          pending=$(rpc online_alerts_pending "$(jq -nc --arg t "$TOKEN" '{p_token: $t}')")
+          echo "$pending" | jq -c '.[]' | while read -r a; do
+            id=$(jq -r .id <<<"$a"); kind=$(jq -r .kind <<<"$a"); level=$(jq -r .level <<<"$a"); value=$(jq -r .value <<<"$a"); at=$(jq -r .at <<<"$a")
+            if [ "$kind" = online ]; then
+              title="Block Rush: $value players online (alert $level of 200 limit)"
+              body="Players online reached $value at $at (UTC). Supabase free plan limit: 200 Realtime concurrent connections. Consider Supabase Pro before 200."
+            else
+              title="Block Rush: $level players!"
+              body="Block Rush reached $value players at $at (UTC)."
+            fi
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+            rpc online_alerts_sent "$(jq -nc --arg t "$TOKEN" --argjson id "$id" '{p_token: $t, p_ids: [$id]}')"
+          done
